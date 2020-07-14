@@ -9,69 +9,38 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image_write.h"
 
-int main (int argc, char **argv) {
-  int ancho, alto, canales;
-  unsigned char *img = stbi_load("imagenes_entrada/test1.jpg", &ancho, &alto, &canales, 0);
-  if(img == NULL){
-      printf("Error al cargar la imagen");
-      exit(1);
-  }
-  printf("Alto:%d\nAncho:%d\nCanales:%d", alto, ancho, canales);
+#include "funciones.h"
 
-  /*int cantImagenes = 0;
-  int umbralBin = 0;
-  int umbralClas = 0;
-  char* nombreMasc = NULL;
-  int index;
-  int c;
-  opterr = 0;
-
-  while ((c = getopt (argc, argv, "c:u:n:m:")) != -1){
-    switch (c)
-    {
-    case 'c':
-        sscanf(optarg, "%d", &cantImagenes);
-        break;
-    
-    case 'u':
-        sscanf(optarg, "%d", &umbralBin);
-        break;
-
-    case 'n':
-        sscanf(optarg, "%d", &umbralClas);
-        break;
-
-    case 'm':
-        nombreMasc = optarg;
-        break;
-
-    case '?':
-
-        if (optopt == 'c'){
-            fprintf(stderr, "Opcion -%c requiere un argumento.\n", optopt);
-        }
-
-        else if(optopt == 'u'){
-            fprintf(stderr, "Opcion -%c requiere un argumento.\n", optopt);
-        }
-
-        else if(optopt == 'n'){
-            fprintf(stderr, "Opcion -%c requiere un argumento.\n", optopt);
-        }
-
-        else if(optopt == 'm'){
-            fprintf(stderr, "Opcion -m requiere un argumento.\n");
-        }
-        
-        else if (isprint (optopt))
-          fprintf(stderr, "Opcion desconocida `-%c'.\n", optopt);
-
-        else
-          fprintf(stderr, "Opcion con caracter desconocido `\\x%x'.\n", optopt);
-        return 1;
-
-    default:
-        abort ();
+int main (int argc, char **argv){
+    int cantImg;
+    int umbral;
+    int porcentaje;
+    int bandera = 0;
+    char* filtro = NULL;
+    recibirDatos(argc, argv, &cantImg, &umbral, &porcentaje, &filtro, &bandera);
+    if(bandera == 1){
+        printf("|    image    |    nearly black    |\n|-------------|--------------------|\n");
     }
-  }*/
+    
+    for(int i = 1; i <= cantImg; i++){
+        int ancho, alto, canales;
+        char* nombre = malloc(32);
+        sprintf(nombre, "imagenes_entrada/imagen_%d.jpg", i);
+        unsigned char *img = leerJPG(nombre, &ancho, &alto, &canales);
+        unsigned char *imgBN = convertirBN(img, &ancho, &alto, &canales);
+        unsigned char *imgFiltro = aplicarFiltro(imgBN, &ancho, &alto, filtro);
+        unsigned char *imgBin = binarizar(imgFiltro, &ancho, &alto, umbral);
+        escribirImgBN(imgBin, ancho, alto, imgBin);
+
+        char* salida = malloc(32);
+        sprintf(salida, "imagenes_salida/imagen_%d.jpg", i);
+        stbi_write_jpg(salida, ancho, alto, 1, imgBin, 100);
+        int clasificacion = isNearlyBlack(imgBin, &ancho, &alto, porcentaje);
+        if(bandera == 1 && clasificacion == 1){
+            printf("|  imagen_%d   |         yes        |\n", i);
+        }
+        else if(bandera == 1 && clasificacion == 0){
+            printf("|  imagen_%d   |         no         |\n", i);
+        }
+    }
 }
