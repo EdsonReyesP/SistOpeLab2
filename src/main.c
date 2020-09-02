@@ -3,11 +3,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <sys/types.h>
 
 #include "stb_image/stb_image.h"
 #include "stb_image/stb_image_write.h"
 
 #include "funciones.h"
+
+#define READ 0
+#define WRITE 1
 
 //Programa que lee una imagen jpeg a colores y la convierte en una imagen binarizada que escribe en memoria, además de clasificarla como nearly black o no
 int main (int argc, char **argv){
@@ -17,6 +21,9 @@ int main (int argc, char **argv){
     int porcentaje;
     int bandera = 0;
     char* filtro = NULL;
+
+    /*Se crea variable para la espera del hijo*/
+    int status;
 
     /*Se almacenan los datos ingresados por el usuario*/
     recibirDatos(argc, argv, &cantImg, &umbral, &porcentaje, &filtro, &bandera);
@@ -28,33 +35,28 @@ int main (int argc, char **argv){
     
     /*Ciclo que se repite la cantidad de veces que indique el usuario*/
     for(int i = 1; i <= cantImg; i++){
-        /*Se crean los datos necesarios para cada iteración*/
-        int ancho, alto, canales;
-        char* nombre = malloc(32);
-        sprintf(nombre, "imagenes_entrada/imagen_%d.jpg", i);
 
-        /*Se lee la imagen_i*/
-        unsigned char *img = leerJPG(nombre, &ancho, &alto, &canales);
+        int pipefd[2];
+        char buffer[100];
+        pipe(pipefd);
 
-        /*Se aplican las conversiones indicadas en el enunciado*/
-        unsigned char *imgBN = convertirBN(img, &ancho, &alto, &canales);
-        unsigned char *imgFiltro = aplicarFiltro(imgBN, &ancho, &alto, filtro);
-        unsigned char *imgBin = binarizar(imgFiltro, &ancho, &alto, umbral);
+        /*Se crea un proceso hijo*/
+        pid_t pid = fork();
 
-        /*Se escribe en memoria la imagen_i*/
-        char* salida = malloc(32);
-        sprintf(salida, "imagenes_salida/imagen_%d.jpg", i);
-        escribirImgBN(salida, ancho, alto, imgBin);
+        if(pid == 0){   //Proceso Hijo
+        dup2(pipefd[READ],STDOUT_FILENO); //STDOUT_FILENO = un int que tiene el descriptor de stdout.
+        close(pipefd[WRITE]);
 
-        /*Se clasifica la imagen_i en nearly black y se guarda en clasificación*/
-        int clasificacion = isNearlyBlack(imgBin, &ancho, &alto, porcentaje);
-
-        /*Se muestra por pantalla si la imagen_i es nearly black o no en caso de ser requerido*/
-        if(bandera == 1 && clasificacion == 1){
-            printf("|  imagen_%d   |         yes        |\n", i);
+            //Ejecuta Lectura como proceso aparte recibiendo parámetros en arcv
+            char *argumentos[] = {i, umbral, porcentaje, bandera, filtro, (const char*)NULL};
+            execv("Lectura", argumentos);
         }
-        else if(bandera == 1 && clasificacion == 0){
-            printf("|  imagen_%d   |         no         |\n", i);
+        else{           //Proceso Padre
+            /*Se espera al hijo para continuar con la siguiente iteración del for*/
+            wait(&status);
+
+            write(STDOUT_FILENO, "TE ENVIO ESTE MENSAJE CUALQUIERA", 33);
+        	return 0;
         }
     }
 
