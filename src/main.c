@@ -64,8 +64,17 @@ int main (int argc, char **argv){
         else{           //Proceso Padre
             /*Se espera al hijo para continuar con la siguiente iteración del for*/
             
+            int ancho, alto, canales;
+            char* nombre = malloc(32);
+            sprintf(nombre, "imagenes_entrada/imagen_%d.jpg", i);
+
+            /*Se lee la imagen_i*/
+            unsigned char *img = leerJPG(nombre, &ancho, &alto, &canales);
+            char msg[4000000];
+            sprintf(msg, %p, img);
+
             close(pipefd[READ]);
-            write(pipefd[WRITE], "TE ENVIO ESTE MENSAJE CUALQUIERA", 33*sizeof(char));
+            write(pipefd[WRITE], msg, 4000000*sizeof(char));
             waitpid(pid, &status, 0);
         }
     }

@@ -12,8 +12,8 @@
 
 //Programa que lee una imagen y crea un proceso al cual enviar el resultado.
 int main (int argc, char **argv){
-    char buffer[100];
-    read(STDIN_FILENO, buffer, 100);
+    char buffer[4000000];
+    read(STDIN_FILENO, buffer, 4000000);
     printf("Padre: %s\n", buffer);
     return 0;
     //Almacenar los datos
