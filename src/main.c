@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include "stb_image/stb_image.h"
 #include "stb_image/stb_image_write.h"
@@ -44,8 +45,8 @@ int main (int argc, char **argv){
         pid_t pid = fork();
 
         if(pid == 0){   //Proceso Hijo
-            dup2(pipefd[READ],STDOUT_FILENO); //STDOUT_FILENO = un int que tiene el descriptor de stdout.
             close(pipefd[WRITE]);
+            dup2(pipefd[READ],STDIN_FILENO); //STDOUT_FILENO = un int que tiene el descriptor de stdout.
             char* iStr = malloc(3);
             char* umbralStr = malloc(10);
             char* porcentajeStr = malloc(10);
@@ -55,16 +56,17 @@ int main (int argc, char **argv){
             sprintf(porcentajeStr, "%d", porcentaje);
             sprintf(banderaStr, "%d", bandera);
 
+
             //Ejecuta Lectura como proceso aparte recibiendo parámetros en arcv
             char *argumentos[] = {iStr, umbralStr, porcentajeStr, banderaStr, filtro, (const char*) NULL};
-            execv("Lectura", argumentos);
+            execv("./Lectura", argumentos);
         }
         else{           //Proceso Padre
             /*Se espera al hijo para continuar con la siguiente iteración del for*/
-            wait(&status);
-
-            write(STDOUT_FILENO, "TE ENVIO ESTE MENSAJE CUALQUIERA", 33);
-        	return 0;
+            
+            close(pipefd[READ]);
+            write(pipefd[WRITE], "TE ENVIO ESTE MENSAJE CUALQUIERA", 33*sizeof(char));
+            waitpid(pid, &status, 0);
         }
     }
 
