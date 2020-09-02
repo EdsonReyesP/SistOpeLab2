@@ -49,7 +49,7 @@ int main (int argc, char **argv){
             char* iStr, umbralStr, porcentajeStr, banderaStr;
             sprintf(iStr, "%d", i);
             sprintf(umbralStr, "%d", umbral);
-            sprintf(porcentajeStr, "%d", porcentaje;
+            sprintf(porcentajeStr, "%d", porcentaje);
             sprintf(banderaStr, "%d", bandera);
 
             //Ejecuta Lectura como proceso aparte recibiendo parámetros en arcv
