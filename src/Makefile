@@ -2,7 +2,7 @@ salida_out = salida
 
 
 salida_headers = funciones.h
-salida_source  = $(salida_headers:.h=.c) main.c lecturaImg.c
+salida_source  = $(salida_headers:.h=.c) main.c
 salida_objects = $(salida_source:.c=.o)
 
 CC     = gcc

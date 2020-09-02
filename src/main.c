@@ -37,18 +37,23 @@ int main (int argc, char **argv){
     for(int i = 1; i <= cantImg; i++){
 
         int pipefd[2];
-        char buffer[100];
+        //char buffer[100];
         pipe(pipefd);
 
         /*Se crea un proceso hijo*/
         pid_t pid = fork();
 
         if(pid == 0){   //Proceso Hijo
-        dup2(pipefd[READ],STDOUT_FILENO); //STDOUT_FILENO = un int que tiene el descriptor de stdout.
-        close(pipefd[WRITE]);
+            dup2(pipefd[READ],STDOUT_FILENO); //STDOUT_FILENO = un int que tiene el descriptor de stdout.
+            close(pipefd[WRITE]);
+            char* iStr, umbralStr, porcentajeStr, banderaStr;
+            sprintf(iStr, "%d", i);
+            sprintf(umbralStr, "%d", umbral);
+            sprintf(porcentajeStr, "%d", porcentaje;
+            sprintf(banderaStr, "%d", bandera);
 
             //Ejecuta Lectura como proceso aparte recibiendo parámetros en arcv
-            char *argumentos[] = {i, umbral, porcentaje, bandera, filtro, (const char*)NULL};
+            char *argumentos[] = {iStr, umbralStr, porcentajeStr, banderaStr, filtro, (const char*) NULL};
             execv("Lectura", argumentos);
         }
         else{           //Proceso Padre
