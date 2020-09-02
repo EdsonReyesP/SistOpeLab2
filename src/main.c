@@ -46,7 +46,10 @@ int main (int argc, char **argv){
         if(pid == 0){   //Proceso Hijo
             dup2(pipefd[READ],STDOUT_FILENO); //STDOUT_FILENO = un int que tiene el descriptor de stdout.
             close(pipefd[WRITE]);
-            char* iStr, umbralStr, porcentajeStr, banderaStr;
+            char* iStr = malloc(3);
+            char* umbralStr = malloc(10);
+            char* porcentajeStr = malloc(10);
+            char* banderaStr = malloc(10);
             sprintf(iStr, "%d", i);
             sprintf(umbralStr, "%d", umbral);
             sprintf(porcentajeStr, "%d", porcentaje);
