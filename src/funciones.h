@@ -9,4 +9,5 @@ unsigned char *aplicarFiltro(unsigned char *img, int *ancho, int *alto, char* no
 unsigned char *binarizar(unsigned char *img, int *ancho, int *alto, int umbral);
 int isNearlyBlack(unsigned char *img, int *ancho, int *alto, int porcentaje);
 void escribirImgBN(char* nombreImg, int ancho, int alto, unsigned char *imagen);
+int** imgCharAInt(unsigned char *img, int ancho, int alto, int canales);
 #endif

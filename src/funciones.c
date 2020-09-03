@@ -329,3 +329,24 @@ void escribirImgBN(char* nombreImg, int ancho, int alto, unsigned char *imagen){
     /*Escribe una imagen de un solo canal con los parámetros recibidos y sin perder calidad*/
     stbi_write_jpg(nombreImg, ancho, alto, 1, imagen, 100);
 }
+
+int** imgCharAInt(unsigned char *img, int ancho, int alto, int canales){
+    int i;
+    int **matriz;
+	matriz = (int **) malloc (canales*ancho*sizeof(int *));
+    for (i = 0; i < canales*ancho; i++){
+		matriz[i] = (int *) malloc (alto*sizeof(int));
+	}
+
+    int j;
+    int valor;
+    unsigned char *valorStr = img;
+    for (j = 0; j < canales*ancho; j++){
+        for (i = 0; i < alto; i++){
+            valor = (int) *valorStr;
+			matriz[j][i] = valor;
+            valorStr++;
+		}
+	}
+    return matriz;
+}

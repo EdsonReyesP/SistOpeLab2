@@ -24,26 +24,22 @@ unsigned char *leerJPG(char *nombreImg, int *ancho, int *alto, int *canales){
     return img;
 }
 
-int** imgCharAInt(unsigned char *img, int alto, int ancho, int canales){
+int** imgCharAInt(unsigned char *img, int ancho, int alto, int canales){
     int i;
     int **matriz;
-	matriz = (int **) malloc (alto*sizeof(int *));
-    for (i = 0; i < alto; i++){
-		matriz[i] = (int *) malloc (canales*ancho*sizeof(int));
+	matriz = (int **) malloc (canales*ancho*sizeof(int *));
+    for (i = 0; i < canales*ancho; i++){
+		matriz[i] = (int *) malloc (alto*sizeof(int));
 	}
 
     int j;
-    int c;
     int valor;
     unsigned char *valorStr = img;
-    for (j = 0; j < alto; j++){
-		for (i = 0; i < ancho; i++){
-            for (c = 0; c < canales; c++){
-                valor = (int) *valorStr;
-			    matriz[i+c][j] = valor;
-                printf("%d ", valor);
-                valorStr++;
-            }
+    for (j = 0; j < canales*ancho; j++){
+        for (i = 0; i < alto; i++){
+            valor = (int) *valorStr;
+			matriz[j][i] = valor;
+            valorStr++;
 		}
 	}
     return matriz;
@@ -51,6 +47,6 @@ int** imgCharAInt(unsigned char *img, int alto, int ancho, int canales){
 
 int main(int argc, char **argv){
     int alto, ancho, canales;
-    unsigned char *img = leerJPG("imagenes_entrada/imagen_1.jpg", &alto, &ancho, &canales);
-    imgCharAInt(img, alto, ancho, canales);
+    unsigned char *img = leerJPG("imagenes_entrada/imagen_1.jpg", &ancho, &alto, &canales);
+    imgCharAInt(img, ancho, alto, canales);
 }

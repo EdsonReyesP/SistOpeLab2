@@ -11,9 +11,6 @@
 
 #include "funciones.h"
 
-#define READ 0
-#define WRITE 1
-
 //Programa que lee una imagen jpeg a colores y la convierte en una imagen binarizada que escribe en memoria, además de clasificarla como nearly black o no
 int main (int argc, char **argv){
     /*Se crean valores donde se almacenarán los datos ingresados por el usuario*/
@@ -36,36 +33,25 @@ int main (int argc, char **argv){
     
     /*Ciclo que se repite la cantidad de veces que indique el usuario*/
     for(int i = 1; i <= cantImg; i++){
-
-        int pipefd[2];
-        //char buffer[100];
-        pipe(pipefd);
-
         /*Se crea un proceso hijo*/
         pid_t pid = fork();
 
         if(pid == 0){   //Proceso Hijo
-            close(pipefd[WRITE]);
-            dup2(pipefd[READ],STDIN_FILENO); //STDOUT_FILENO = un int que tiene el descriptor de stdout.
-            char* iStr = malloc(3);
+            char* iStr = malloc(4);
             char* umbralStr = malloc(10);
             char* porcentajeStr = malloc(10);
-            char* banderaStr = malloc(10);
+            char* banderaStr = malloc(2);
             sprintf(iStr, "%d", i);
             sprintf(umbralStr, "%d", umbral);
             sprintf(porcentajeStr, "%d", porcentaje);
             sprintf(banderaStr, "%d", bandera);
 
-
             //Ejecuta Lectura como proceso aparte recibiendo parámetros en arcv
-            char *argumentos[] = {iStr, umbralStr, porcentajeStr, banderaStr, filtro, (const char*) NULL};
+            char *argumentos[] = { "-c", iStr, "-u", umbralStr, "-n", porcentajeStr, "-b", banderaStr, "-m", filtro, (const char*) NULL};
             execv("./Lectura", argumentos);
         }
         else{           //Proceso Padre
             /*Se espera al hijo para continuar con la siguiente iteración del for*/
-            int img[5] = {1, 2, 3, 4, 5};
-            close(pipefd[READ]);
-            write(pipefd[WRITE], img, sizeof(img));
             waitpid(pid, &status, 0);
         }
     }
