@@ -1,8 +1,7 @@
-salida_out = salida
-
+salida_out = salida Lectura BlancoNegro
 
 salida_headers = funciones.h
-salida_source  = $(salida_headers:.h=.c) main.c
+salida_source  = $(salida_headers:.h=.c) main.c lecturaImg.c convertirBN.c
 salida_objects = $(salida_source:.c=.o)
 
 CC     = gcc

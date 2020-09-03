@@ -24,4 +24,5 @@ int main (int argc, char **argv){
     int **imagen;
     read(STDIN_FILENO, imagen, 3*7*9*sizeof(int));
     printf("Padre: %d\n", imagen[0][0]);
+    return 0;
 }

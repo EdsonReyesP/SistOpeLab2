@@ -72,4 +72,5 @@ int main (int argc, char **argv){
         /*Se espera al hijo para continuar con la siguiente iteración del for*/
         waitpid(pid, &status, 0);
     }
+    return 0;
 }
