@@ -47,7 +47,7 @@ int main (int argc, char **argv){
             sprintf(banderaStr, "%d", bandera);
 
             //Ejecuta Lectura como proceso aparte recibiendo parámetros en arcv
-            char *argumentos[] = { "-c", iStr, "-u", umbralStr, "-n", porcentajeStr, "-b", banderaStr, "-m", filtro, (const char*) NULL};
+            char *argumentos[] = {iStr, umbralStr, porcentajeStr, banderaStr, filtro, (const char*) NULL};
             execv("./Lectura", argumentos);
         }
         else{           //Proceso Padre

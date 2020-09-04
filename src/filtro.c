@@ -17,7 +17,7 @@
 //Programa que lee una imagen y crea un proceso al cual enviar el resultado.
 int main (int argc, char **argv){
     //Almacenar los datos
-    int i, umbral, porcentaje, bandera, alto, ancho, canales, tamano;
+    int i, umbral, porcentaje, bandera, alto, ancho, tamano;
     char* filtro;
 
     i = (int) argv[0];
@@ -27,17 +27,16 @@ int main (int argc, char **argv){
     filtro = argv[4];
     alto = (int) argv[5];
     ancho = (int) argv[6];
-    canales = (int) argv[7];
-    tamano = alto * ancho * canales;
+    tamano = alto * ancho;
 
     int imgBuffer[canales];
     read(STDIN_FILENO, imgBuffer, tamano * sizeof(int));
-    int *imgColor = malloc(tamano * sizeof(int));
+    int *imgBN = malloc(tamano * sizeof(int));
     for(int c = 0; c < tamano; c++){
-        imgColor[c] = imgBuffer[c];
+        imgBN[c] = imgBuffer[c];
     }
 
-    int *imgBN = convertirBN(imgColor, ancho, alto, canales);
+    int *imgFiltro = aplicarFiltro(imgBN, ancho, alto, filtro);
 
     /*Se crea variable para la espera del hijo*/
     int status;
@@ -54,18 +53,17 @@ int main (int argc, char **argv){
         close(pipeImg[WRITE]);
         dup2(pipeImg[READ], STDIN_FILENO);
         
-        //Ejecuta BlancoNegro como proceso aparte pasando los parámetros en argv
-        char *argumentos[] = {argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], (const char*) NULL};
-        execv("./Filtro", argumentos);
+        //Ejecuta Binarizacion como proceso aparte pasando los parámetros en argv
+        char *argumentos[] = {argv[0], argv[1], argv[2], argv[3], argv[5], argv[6], (const char*) NULL};
+        execv("./Binarizacion", argumentos);
     }
 
     //Enviar imagen en blanco y negro por pipe
     else{
         /*Se convierte la imagen de int* a int array*/
-        int tamanoBN = ancho * alto;
-        int imagen[tamanoBN];
-        for(int c = 0; c < tamanoBN; c++){
-            imagen[c] = imgBN[c];
+        int imagen[tamano];
+        for(int c = 0; c < tamano; c++){
+            imagen[c] = imgFiltro[c];
         }
 
         /*Se envía la imagen leida al hijo*/

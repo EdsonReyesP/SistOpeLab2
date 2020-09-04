@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include "stb_image/stb_image.h"
 #include "stb_image/stb_image_write.h"
@@ -20,7 +21,11 @@ int main (int argc, char **argv){
     int i, umbral, porcentaje, bandera;
     char* filtro;
 
-    recibirDatos(argc, argv, &i, &umbral, &porcentaje, &filtro, &bandera);
+    i = (int) argv[0];
+    umbral = (int) argv[1];
+    porcentaje = (int) argv[2];
+    bandera = (int) argv[3];
+    filtro = argv[4];
 
     //Leer imagen
     /*Se crean los datos necesarios para cada iteración*/
@@ -29,7 +34,7 @@ int main (int argc, char **argv){
     sprintf(nombre, "imagenes_entrada/imagen_%d.jpg", i);
 
     /*Se lee la imagen_i*/
-    unsigned char *img = leerJPG(nombre, &ancho, &alto, &canales);
+    int *img = leerJPG(nombre, &ancho, &alto, &canales);
 
     /*Se crea variable para la espera del hijo*/
     int status;
@@ -46,24 +51,27 @@ int main (int argc, char **argv){
         close(pipeImg[WRITE]);
         dup2(pipeImg[READ], STDIN_FILENO);
 
-        char* iStr = malloc(4);
-        char* umbralStr = malloc(10);
-        char* porcentajeStr = malloc(10);
-        char* banderaStr = malloc(2);
-        sprintf(iStr, "%d", i);
-        sprintf(umbralStr, "%d", umbral);
-        sprintf(porcentajeStr, "%d", porcentaje);
-        sprintf(banderaStr, "%d", bandera);
+        char* altoStr = malloc(5);
+        char* anchoStr = malloc(5);
+        char *canalesStr = malloc(5);
+        sprintf(altoStr, "%d", alto);
+        sprintf(anchoStr, "%d", ancho);
+        sprintf(canalesStr, "%d", canales);
 
         //Ejecuta BlancoNegro como proceso aparte pasando los parámetros en arcv
-        char *argumentos[] = { "-c", iStr, "-u", umbralStr, "-n", porcentajeStr, "-b", banderaStr, "-m", filtro, (const char*) NULL};
+        char *argumentos[] = {argv[0], argv[1], argv[2], argv[3], argv[4], altoStr, anchoStr, canalesStr, (const char*) NULL};
         execv("./BlancoNegro", argumentos);
     }
 
     //Enviar imagen leída por pipe
     else{
-        /*Se pasan los pixeles de char a una matriz de int*/
-        int **imagen = imgCharAInt(img, ancho, alto, canales);
+        /*Se convierte la imagen de int* a int array*/
+        int c;
+        int tamano = ancho * alto * canales;
+        int imagen[tamano];
+        for(c = 0; c < tamano; c++){
+            imagen[c] = img[c];
+        }
 
         /*Se envía la imagen leida al hijo*/
         close(pipeImg[READ]);
@@ -72,5 +80,6 @@ int main (int argc, char **argv){
         /*Se espera al hijo para continuar con la siguiente iteración del for*/
         waitpid(pid, &status, 0);
     }
+
     return 0;
 }

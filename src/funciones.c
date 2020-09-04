@@ -96,9 +96,9 @@ void recibirDatos(int argc, char **argv, int *cantImg, int *umbralBin, int *porc
 //                  con la información de los pixeles de la imagen indicada en nombreImg, además de los datos de cabezera en esta imagen,
 //                  los que son almacenados en los punteros indicados como parámetros de entrada.
 //
-//SALIDAS:          La función devuelve un unsigned char* con los pixeles de la imagen previamente indicada.
+//SALIDAS:          La función devuelve un arreglo de int con los pixeles de la imagen previamente indicada.
 //                  También guarda el ancho, alto y canales de color de la imagen en los respectivos punteros.
-unsigned char *leerJPG(char *nombreImg, int *ancho, int *alto, int *canales){
+int *leerJPG(char *nombreImg, int *ancho, int *alto, int *canales){
     /*Se crea img con la funcion stbi_load para cargar la imagen en este y los datos en los punteros adecuados*/
     unsigned char *img = stbi_load(nombreImg, ancho, alto, canales, 0);
 
@@ -108,8 +108,20 @@ unsigned char *leerJPG(char *nombreImg, int *ancho, int *alto, int *canales){
         exit(1);
     }
 
+    int i;
+    int *imagen;
+	imagen = (int *) malloc (*canales**ancho**alto*sizeof(int));
+
+    int valor;
+    unsigned char *valorStr = img;
+    for (i = 0; i < *canales**ancho**alto; i++){
+        valor = (int) *valorStr;
+		imagen[i] = valor;
+        valorStr++;
+	}
+
     /*Se retorna img con la información leída de la imagen*/
-    return img;
+    return imagen;
 }
 
 //ENTRADAS:         char* nombreArchivo que indica el nombre del archivo con el filtro que se desea abrir; debe incluir la extensión.
@@ -150,7 +162,7 @@ int **leerFiltro(char* nombreArchivo){
     return matriz;
 }
 
-//ENTRADAS:         unsigned char* img con los pixeles de la imagen a color
+//ENTRADAS:         int* img con los pixeles de la imagen a color
 //                  Puntero a entero ancho con el ancho de la imagen.
 //                  Puntero a entero alto con el alto de la imagen.
 //                  Puntero a entero canales con los canales de la imagen a color.
@@ -158,15 +170,15 @@ int **leerFiltro(char* nombreArchivo){
 //FUNCIONAMIENTO:   Función que toma una imagen a color y la convierte a blanco y negro al tomar una porción de cada color (RGB) y
 //                  juntarlos en un solo canal de grises.
 //
-//SALIDAS:          unsigned char* con la imagen en blanco y negro.
-unsigned char *convertirBN(unsigned char *img, int *ancho, int *alto, int *canales){
+//SALIDAS:          int* con la imagen en blanco y negro.
+int* convertirBN(int *img, int ancho, int alto, int canales){
     /*Se prepara lo necesario para convertir la imagen*/
-    size_t tamano = *ancho * *alto * *canales;
+    size_t tamano = ancho * alto * canales;
     int canalesBN = 1;
-    size_t tamanoBN = *ancho * *alto * canalesBN;
+    size_t tamanoBN = ancho * alto * canalesBN;
 
     /*Se asigna memoria para la imagen en blanco y negro*/
-    unsigned char *imgBN = malloc(tamanoBN);
+    int *imgBN = malloc(tamanoBN*sizeof(int));
 
     /*Se termina el programa en caso de error*/
     if(imgBN == NULL){
@@ -176,8 +188,9 @@ unsigned char *convertirBN(unsigned char *img, int *ancho, int *alto, int *canal
 
     /*Ciclo que recorre cada pixel de la imagen a color y convierte los colores según la razón indicada previamente en el enunciado,
     guardando el resultado en imgBN*/
-    for(unsigned char *p = img, *pg = imgBN; p < img + tamano; p += *canales, pg += canalesBN){
-        *pg = (uint8_t)((*p * 0.3) + (*(p + 1) * 0.59) + (*(p + 2) * 0.11));
+    int i, j;
+    for(i = 0, j = 0; i < tamano; i = i + canales, j = j + canalesBN){
+        imgBN[j] = ((img[i] * 0.3) + (img[i + 1] * 0.59) + (img[i + 2] * 0.11));
     }
 
     /*Se retorna la imagen en blanco y negro*/
@@ -185,7 +198,7 @@ unsigned char *convertirBN(unsigned char *img, int *ancho, int *alto, int *canal
 }
 
 
-//ENTRADAS:         unsigned char* img con los pixeles de la imagen en blanco y negro.
+//ENTRADAS:         int* img con los pixeles de la imagen en blanco y negro.
 //                  Puntero a entero ancho con el ancho de la imagen.
 //                  Puntero a entero alto con el alto de la imagen.
 //                  char* nombreFiltro con el nombre del archivo que posee el filtro a aplicar a la imagen.
@@ -193,16 +206,13 @@ unsigned char *convertirBN(unsigned char *img, int *ancho, int *alto, int *canal
 //FUNCIONAMIENTO:   Función lee y guarda el filtro indicado en nombreFiltro para luego aplicarlo a cada pixel de la imagen en blanco y
 //                  negro a excepción de los pixeles en los bordes que se mantienen tal como están según lo indicado.
 //
-//SALIDAS:          unsigned char con la imagen en blanco y negro con el filtro ya aplicado.
-unsigned char *aplicarFiltro(unsigned char *img, int *ancho, int *alto, char* nombreFiltro){
+//SALIDAS:          int* con la imagen en blanco y negro con el filtro ya aplicado.
+int *aplicarFiltro(int *img, int ancho, int alto, char* nombreFiltro){
     /*Se prepara lo necesario para la imagen con filtro*/
-    int canalesBN = 1;
-    size_t tamanoBN = *ancho * *alto * canalesBN;
-    int canalesFiltro = canalesBN;
-    size_t tamanoFiltro = *ancho * *alto * canalesFiltro;
+    int tamano = ancho * alto;
 
     /*Se reserva memoria para la imagen con filtro*/
-    unsigned char *imgFiltro = malloc(tamanoFiltro);
+    int *imgFiltro = malloc(tamano*sizeof(int));
 
     /*Se termina el programa en caso de error*/
     if(imgFiltro == NULL){
@@ -213,22 +223,28 @@ unsigned char *aplicarFiltro(unsigned char *img, int *ancho, int *alto, char* no
     /*Se obtiene el filtro en una matriz de 3x3*/
     int **filtro = leerFiltro(nombreFiltro);
     
-    /*Se crea un entero pgInt usado en el ciclo for*/
-    int pgInt = 0;
+    /*Se crea un entero i usado en el ciclo for*/
+    int i;
 
     /*Ciclo que recorre los pixeles de la imagen en blanco y negro para escribir el filtro aplicado en imgFiltro*/
-    for(unsigned char *pbn = img, *pf = imgFiltro; pbn < img + tamanoBN; pf += canalesFiltro, pbn += canalesBN, pgInt += canalesBN){
+    for(i = 0; i < tamano; i++){
         /*Condición para que los pixeles que se encuentran en el borde sean escritos sin que se les aplique el filtro*/
-        if (pgInt < (*ancho * canalesBN) || pgInt >= (*ancho * (*alto - 1) * canalesBN) || pgInt % (*ancho * canalesBN) == 0 || (pgInt + 1) % (*ancho * canalesBN) == 0){
-            *pf = *pbn;
+        if (i < ancho || i >= (ancho * (alto - 1)) || i % ancho == 0 || (i + 1) % ancho == 0){
+            imgFiltro[i] = img[i];
         }
 
         /*Se aplica el filtro a los pixeles que no se encuentran al borde de la imagen, modificando cada pixel según la suma de
         la multiplicación entre los valores de los pixeles adyacentes y el filtro leído*/
         else{
-            *pf = (uint8_t) ((*(pbn - ((*ancho + 1) * canalesBN)) * filtro[0][0]) + (*(pbn - ((*ancho) * canalesBN)) * filtro[1][0]) + (*(pbn - ((*ancho - 1) * canalesBN)) * filtro[2][0]) +
-                            (*(pbn - canalesBN) * filtro[0][1]) + (*pbn * filtro[1][1]) + (*(pbn + canalesBN) * filtro[2][1]) +
-                            (*(pbn + ((*ancho - 1) * canalesBN)) * filtro[0][2]) + (*(pbn + ((*ancho) * canalesBN)) * filtro[1][2]) + (*(pbn + ((*ancho + 1) * canalesBN)) * filtro[2][2]));
+            imgFiltro[i] = (img[i - (ancho + 1)] * filtro[0][0]) + (img[i - ancho] * filtro[1][0]) + (img[i - (ancho - 1)] * filtro[2][0]) +
+                           (img[i - 1] * filtro[0][1]) + (img[i] * filtro[1][1]) + (img[i + 1] * filtro[2][1]) +
+                           (img[i + (ancho - 1)] * filtro[0][2]) + (img[i + ancho] * filtro[1][2]) + (img[i + (ancho + 1)] * filtro[2][2]);
+            if(imgFiltro[i] < 0){
+                imgFiltro[i] = 0;
+            }
+            else if(imgFiltro[i] > 255){
+                imgFiltro[i] = 255;
+            }
         }
     }
 
@@ -236,7 +252,7 @@ unsigned char *aplicarFiltro(unsigned char *img, int *ancho, int *alto, char* no
     return imgFiltro;
 }
 
-//ENTRADAS:         unsigned char* img con los pixeles de la imagen en blanco y negro con el filtro aplicado.
+//ENTRADAS:         int* img con los pixeles de la imagen en blanco y negro con el filtro aplicado.
 //                  Puntero a entero ancho con el ancho de la imagen.
 //                  Puntero a entero alto con el alto de la imagen.
 //                  int umbral con el valor entero en que se diferencia negro de blanco; puede ser negativo o positivo.
@@ -244,16 +260,13 @@ unsigned char *aplicarFiltro(unsigned char *img, int *ancho, int *alto, char* no
 //FUNCIONAMIENTO:   Función que toma una imagen en blanco y negro para convertirla en una imagen binarizada según el umbral
 //                  que se indique, siendo blanco cada pixel que lo exceda y negro los que no.
 //
-//SALIDAS:          unsigned char* con la imagen binarizada.
-unsigned char *binarizar(unsigned char *img, int *ancho, int *alto, int umbral){
+//SALIDAS:          int* con la imagen binarizada.
+int *binarizar(int *img, int ancho, int alto, int umbral){
     /*Se prepara lo necesario para la imagen binarizada*/
-    int canalesFiltro = 1;
-    size_t tamanoFiltro = *ancho * *alto * canalesFiltro;
-    int canalesBin = canalesFiltro;
-    size_t tamanoBin = *ancho * *alto * canalesBin;
+    size_t tamano = ancho * alto;
 
     /*Se reserva memoria para la imagen binarizada*/
-    unsigned char *imgBin = malloc(tamanoBin);
+    int *imgBin = malloc(tamano*sizeof(int));
 
     /*Se termina el programa en caso de error*/
     if(imgBin == NULL){
@@ -262,15 +275,16 @@ unsigned char *binarizar(unsigned char *img, int *ancho, int *alto, int umbral){
     }
 
     /*Ciclo que recorre los pixeles de la imagen con filtro para binarizarla*/
-    for(unsigned char *pf = img, *pb = imgBin; pf < img + tamanoFiltro; pf += canalesFiltro, pb += canalesBin){
+    int i;
+    for(i = 0; i < tamano; i++){
         /*En caso de que el pixel sea mayor que el umbral se deja blanco*/
-        if(*pf > umbral){
-            *pb = 255;
+        if(img[i] > umbral){
+            imgBin[i] = 255;
         }
 
         /*En caso de que el pixel sea igual o menor que el umbral se deja negro*/
         else{
-            *pb = 0;
+            imgBin[i] = 0;
         }
     }
 
@@ -278,7 +292,7 @@ unsigned char *binarizar(unsigned char *img, int *ancho, int *alto, int umbral){
     return imgBin;
 }
 
-//ENTRADAS:         unsigned char* img con los pixeles de la imagen binarizada.
+//ENTRADAS:         int* img con los pixeles de la imagen binarizada.
 //                  Puntero a entero ancho con el ancho de la imagen.
 //                  Puntero a entero alto con el alto de la imagen.
 //                  int porcentaje con un valor del 0 al 100 que indica el porcentaje de pixeles negros en la imagen.
@@ -288,23 +302,23 @@ unsigned char *binarizar(unsigned char *img, int *ancho, int *alto, int umbral){
 //
 //SALIDAS:          Entero que indica si una imagen es nearly black o no, siendo 0 en caso de que no lo sea y 1 en caso de que
 //                  lo sea.
-int isNearlyBlack(unsigned char *img, int *ancho, int *alto, int porcentaje){
+int isNearlyBlack(int *img, int ancho, int alto, int porcentaje){
     /*Se crea suma que contendrá la cantidad de pixeles negros*/
     float suma = 0;
 
     /*Se prepara lo necesario para recorrer los pixeles de la imagen*/
-    int canalesBin = 1;
-    size_t tamanoBin = *ancho * *alto * canalesBin;
+    size_t tamano = ancho * alto;
 
     /*Ciclo que recorre la imagen pixel por pixel y guarda la cantidad de pixeles negros (0) encontrados*/
-    for(unsigned char *pb = img; pb < img + tamanoBin; pb += canalesBin){
-        if(*pb == 0){
+    int i;
+    for(i = 0; i < tamano; i++){
+        if(img[i] == 0){
             suma = suma + 1;
         }
     }
 
     /*Se calcula el porcentaje de pixeles negros*/
-    float porcentajeNegro = 100 * (suma / (*ancho * *alto));
+    float porcentajeNegro = 100 * (suma / (ancho * alto));
 
     /*Se retorna verdadero en caso de que el porcentaje real de pixeles negros sea igual o mayor al porcentaje indicado*/
     if(porcentajeNegro >= porcentaje){
@@ -320,27 +334,26 @@ int isNearlyBlack(unsigned char *img, int *ancho, int *alto, int porcentaje){
 //ENTRADAS:         char nombreImg con el nombre con el que se guardará la imagen.
 //                  int ancho con el ancho de la imagen a guardar.
 //                  int alto con el alto de la imagen a guardar.
-//                  unsigned char* imagen en con los pixeles de la imagen en blanco y negro (de un solo canal) a guardar.
+//                  int* img en con los pixeles de la imagen en blanco y negro (de un solo canal) a guardar.
 //
 //FUNCIONAMIENTO:   Función que escribe en memoria la imagen en blanco y negro indicada bajo el nombre indicado.
 //
 //SALIDAS:          Al ser una función void no tiene salida salvo por la imagen que se escribe en memoria.
-void escribirImgBN(char* nombreImg, int ancho, int alto, unsigned char *imagen){
+int escribirImagen(int *img, int alto, int ancho, char *nombreImg){
+    /*Se crean variables necesarias*/
+    int i;
+    size_t tamano = ancho * alto;
+    unsigned char *imagen = malloc(tamano);
+    unsigned char *p = imagen;
+
+    /*Se convierte el arreglo de entero con la imagen a un arreglo de char que permita guardar la imagen*/
+    for(i = 0; i < tamano; i++){
+        *p = (uint8_t) img[i];
+        p += 1;
+    }
+
     /*Escribe una imagen de un solo canal con los parámetros recibidos y sin perder calidad*/
     stbi_write_jpg(nombreImg, ancho, alto, 1, imagen, 100);
-}
 
-int* imgCharAInt(unsigned char *img, int ancho, int alto, int canales){
-    int i;
-    int *imagen;
-	imagen = (int *) malloc (canales*ancho*alto*sizeof(int));
-
-    int valor;
-    unsigned char *valorStr = img;
-    for (i = 0; i < canales*ancho*alto; i++){
-        valor = (int) *valorStr;
-		imagen[i] = valor;
-        valorStr++;
-	}
-    return imagen;
+    return 1;
 }
