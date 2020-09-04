@@ -19,14 +19,14 @@ int main (int argc, char **argv){
     //Almacenar los datos
     int i, bandera, alto, ancho, tamano, resultado;
 
-    i = (int) argv[0];
-    bandera = (int) argv[1];
-    alto = (int) argv[2];
-    ancho = (int) argv[3];
-    resultado = (int) argv[4];
+    i = atoi(argv[0]);
+    bandera = atoi(argv[1]);
+    alto = atoi(argv[2]);
+    ancho = atoi(argv[3]);
+    resultado = atoi(argv[4]);
     tamano = alto * ancho;
 
-    int imgBuffer[canales];
+    int imgBuffer[tamano];
     read(STDIN_FILENO, imgBuffer, tamano * sizeof(int));
     int *imgBin = malloc(tamano * sizeof(int));
     for(int c = 0; c < tamano; c++){
@@ -41,7 +41,7 @@ int main (int argc, char **argv){
     if(bandera == 1 && resultado == 1){
         printf("|  imagen_%d   |         yes        |\n", i);
     }
-    else if(bandera == 1 && clasificacion == 0){
+    else if(bandera == 1 && resultado == 0){
         printf("|  imagen_%d   |         no         |\n", i);
     }
 

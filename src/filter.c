@@ -17,24 +17,22 @@
 //Programa que lee una imagen y crea un proceso al cual enviar el resultado.
 int main (int argc, char **argv){
     //Almacenar los datos
-    int i, umbral, porcentaje, bandera, alto, ancho, tamano;
+    int alto, ancho, tamano;
+    char* filtro;
 
-    i = (int) argv[0];
-    umbral = (int) argv[1];
-    porcentaje = (int) argv[2];
-    bandera = (int) argv[3];
-    alto = (int) argv[4];
-    ancho = (int) argv[5];
+    filtro = argv[4];
+    alto = atoi(argv[5]);
+    ancho = atoi(argv[6]);
     tamano = alto * ancho;
 
-    int imgBuffer[canales];
+    int imgBuffer[tamano];
     read(STDIN_FILENO, imgBuffer, tamano * sizeof(int));
-    int *imgFiltro = malloc(tamano * sizeof(int));
+    int *imgBN = malloc(tamano * sizeof(int));
     for(int c = 0; c < tamano; c++){
-        imgFiltro[c] = imgBuffer[c];
+        imgBN[c] = imgBuffer[c];
     }
 
-    int *imgBin = binarizar(imgFiltro, ancho, alto, umbral);
+    int *imgFiltro = aplicarFiltro(imgBN, ancho, alto, filtro);
 
     /*Se crea variable para la espera del hijo*/
     int status;
@@ -52,8 +50,8 @@ int main (int argc, char **argv){
         dup2(pipeImg[READ], STDIN_FILENO);
         
         //Ejecuta Binarizacion como proceso aparte pasando los parámetros en argv
-        char *argumentos[] = {argv[0], argv[2], argv[3], argv[4], argv[5], (const char*) NULL};
-        execv("./NearlyBlack", argumentos);
+        char *argumentos[] = {argv[0], argv[1], argv[2], argv[3], argv[5], argv[6], NULL};
+        execv("./binary", argumentos);
     }
 
     //Enviar imagen en blanco y negro por pipe
@@ -61,7 +59,7 @@ int main (int argc, char **argv){
         /*Se convierte la imagen de int* a int array*/
         int imagen[tamano];
         for(int c = 0; c < tamano; c++){
-            imagen[c] = imgBin[c];
+            imagen[c] = imgFiltro[c];
         }
 
         /*Se envía la imagen leida al hijo*/

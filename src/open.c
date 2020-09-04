@@ -16,24 +16,20 @@
 
 //Programa que lee una imagen y crea un proceso al cual enviar el resultado.
 int main (int argc, char **argv){
+
     //Almacenar los datos
-    int i, porcentaje, bandera, alto, ancho, tamano;
+    int i;
 
-    i = (int) argv[0];
-    porcentaje = (int) argv[1];
-    bandera = (int) argv[2];
-    alto = (int) argv[3];
-    ancho = (int) argv[4];
-    tamano = alto * ancho;
+    i = atoi(argv[0]);
 
-    int imgBuffer[canales];
-    read(STDIN_FILENO, imgBuffer, tamano * sizeof(int));
-    int *imgBin = malloc(tamano * sizeof(int));
-    for(int c = 0; c < tamano; c++){
-        imgBin[c] = imgBuffer[c];
-    }
+    //Leer imagen
+    /*Se crean los datos necesarios para cada iteración*/
+    int ancho, alto, canales;
+    char* nombre = malloc(32);
+    sprintf(nombre, "imagenes_entrada/imagen_%d.jpg", i);
 
-    int nearlyBlack = isNearlyBlack(imgBin, ancho, alto, porcentaje);
+    /*Se lee la imagen_i*/
+    int *img = leerJPG(nombre, &ancho, &alto, &canales);
 
     /*Se crea variable para la espera del hijo*/
     int status;
@@ -50,20 +46,26 @@ int main (int argc, char **argv){
         close(pipeImg[WRITE]);
         dup2(pipeImg[READ], STDIN_FILENO);
 
-        char *resultadoStr = malloc(2);
-        sprintf(resultadoStr, "%d", nearlyBlack);
-        
-        //Ejecuta Binarizacion como proceso aparte pasando los parámetros en argv
-        char *argumentos[] = {argv[0], argv[2], argv[3], argv[4], resultadoStr, (const char*) NULL};
-        execv("./Escritura", argumentos);
+        char* altoStr = malloc(5);
+        char* anchoStr = malloc(5);
+        char *canalesStr = malloc(5);
+        sprintf(altoStr, "%d", alto);
+        sprintf(anchoStr, "%d", ancho);
+        sprintf(canalesStr, "%d", canales);
+
+        //Ejecuta BlancoNegro como proceso aparte pasando los parámetros en arcv
+        char *argumentos[] = {argv[0], argv[1], argv[2], argv[3], argv[4], altoStr, anchoStr, canalesStr, NULL};
+        execv("./gray_process", argumentos);
     }
 
-    //Enviar imagen en blanco y negro por pipe
+    //Enviar imagen leída por pipe
     else{
         /*Se convierte la imagen de int* a int array*/
+        int c;
+        int tamano = ancho * alto * canales;
         int imagen[tamano];
-        for(int c = 0; c < tamano; c++){
-            imagen[c] = imgBin[c];
+        for(c = 0; c < tamano; c++){
+            imagen[c] = img[c];
         }
 
         /*Se envía la imagen leida al hijo*/

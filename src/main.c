@@ -46,9 +46,9 @@ int main (int argc, char **argv){
             sprintf(porcentajeStr, "%d", porcentaje);
             sprintf(banderaStr, "%d", bandera);
 
-            //Ejecuta Lectura como proceso aparte recibiendo parámetros en arcv
-            char *argumentos[] = {iStr, umbralStr, porcentajeStr, banderaStr, filtro, (const char*) NULL};
-            execv("./Lectura", argumentos);
+            //Ejecuta open como proceso aparte recibiendo parámetros en arcv
+            char *argumentos[] = {iStr, umbralStr, porcentajeStr, banderaStr, filtro, NULL};
+            execv("./open", argumentos);
         }
         else{           //Proceso Padre
             /*Se espera al hijo para continuar con la siguiente iteración del for*/
