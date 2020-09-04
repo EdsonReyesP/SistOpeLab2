@@ -93,8 +93,8 @@ void recibirDatos(int argc, char **argv, int *cantImg, int *umbralBin, int *porc
 //                  Puntero a int canales donde se guarda la cantidad de canales de color de la imagen.
 //
 //FUNCIONAMIENTO:   Se hace uso de la funcion stbi_load() de la librería stb para manipular imágenes jpeg para obtener un unsigned char*
-//                  con la información de los pixeles de la imagen indicada en nombreImg, además de los datos de cabezera en esta imagen,
-//                  los que son almacenados en los punteros indicados como parámetros de entrada.
+//                  que luego convierte en un int* con la información de los pixeles de la imagen indicada en nombreImg, además de los
+//                  datos de cabezera en esta imagen, los que son almacenados en los punteros indicados como parámetros de entrada.
 //
 //SALIDAS:          La función devuelve un arreglo de int con los pixeles de la imagen previamente indicada.
 //                  También guarda el ancho, alto y canales de color de la imagen en los respectivos punteros.
@@ -108,10 +108,12 @@ int *leerJPG(char *nombreImg, int *ancho, int *alto, int *canales){
         exit(1);
     }
 
+    /*Se reserva memoria para la imagen como arreglo de enteros*/
     int i;
     int *imagen;
 	imagen = (int *) malloc (*canales**ancho**alto*sizeof(int));
 
+    /*Se pasan los datos de la imagen char* a int* */
     int valor;
     unsigned char *valorStr = img;
     for (i = 0; i < *canales**ancho**alto; i++){

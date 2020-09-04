@@ -16,7 +16,7 @@
 
 //Programa que lee una imagen y crea un proceso al cual enviar el resultado.
 int main (int argc, char **argv){
-    //Almacenar los datos
+    /*Se extraen los datos necesarios de argv*/
     int alto, ancho, tamano;
     char* filtro;
 
@@ -25,6 +25,7 @@ int main (int argc, char **argv){
     ancho = atoi(argv[6]);
     tamano = alto * ancho;
 
+    /*Se lee la imagen del pipe y se pasa de int array a int puntero para aplicar el filtro*/
     int imgBuffer[tamano];
     read(STDIN_FILENO, imgBuffer, tamano * sizeof(int));
     int *imgBN = malloc(tamano * sizeof(int));
@@ -32,41 +33,40 @@ int main (int argc, char **argv){
         imgBN[c] = imgBuffer[c];
     }
 
+    /*Se aplica el filtro según la máscara indicada previamente por el usuario*/
     int *imgFiltro = aplicarFiltro(imgBN, ancho, alto, filtro);
 
     /*Se crea variable para la espera del hijo*/
     int status;
 
-    //Crear pipe
+    /*Se crea el pipe para enviar la imagen al hijo*/
     int pipeImg[2];
     pipe(pipeImg);
 
-    //Fork a Conversor en BN
     /*Se crea un proceso hijo*/
     pid_t pid = fork();
 
-    if(pid == 0){
+    if(pid == 0){   //Proceso Hijo
         close(pipeImg[WRITE]);
         dup2(pipeImg[READ], STDIN_FILENO);
         
-        //Ejecuta Binarizacion como proceso aparte pasando los parámetros en argv
+        /*Se ejecuta binary como proceso aparte pasando los parámetros en argv*/
         char *argumentos[] = {argv[0], argv[1], argv[2], argv[3], argv[5], argv[6], NULL};
         execv("./binary", argumentos);
     }
 
-    //Enviar imagen en blanco y negro por pipe
-    else{
+    else{   //Proceso Padre
         /*Se convierte la imagen de int* a int array*/
         int imagen[tamano];
         for(int c = 0; c < tamano; c++){
             imagen[c] = imgFiltro[c];
         }
 
-        /*Se envía la imagen leida al hijo*/
+        /*Se envía la imagen con el filtro aplicado al hijo*/
         close(pipeImg[READ]);
         write(pipeImg[WRITE], imagen, sizeof(imagen));
 
-        /*Se espera al hijo para continuar con la siguiente iteración del for*/
+        /*Se espera al hijo para avisar al main cuando el siguiente proceso esté listo*/
         waitpid(pid, &status, 0);
     }
 

@@ -16,7 +16,7 @@
 
 //Programa que lee una imagen y crea un proceso al cual enviar el resultado.
 int main (int argc, char **argv){
-    //Almacenar los datos
+    /*Se extraen los datos necesarios de argv*/
     int porcentaje, alto, ancho, tamano;
 
     porcentaje = atoi(argv[1]);
@@ -24,6 +24,7 @@ int main (int argc, char **argv){
     ancho = atoi(argv[4]);
     tamano = alto * ancho;
 
+    /*Se lee la imagen del pipe y se pasa de int array a int puntero para aplicar la conversión*/
     int imgBuffer[tamano];
     read(STDIN_FILENO, imgBuffer, tamano * sizeof(int));
     int *imgBin = malloc(tamano * sizeof(int));
@@ -31,44 +32,45 @@ int main (int argc, char **argv){
         imgBin[c] = imgBuffer[c];
     }
 
+    /*Se clasifica la imagen como nearly black según el porcentaje indicado por el usuario*/
     int nearlyBlack = isNearlyBlack(imgBin, ancho, alto, porcentaje);
 
     /*Se crea variable para la espera del hijo*/
     int status;
 
-    //Crear pipe
+    /*Se crea el pipe para enviar la imagen binarizada al hijo*/
     int pipeImg[2];
     pipe(pipeImg);
 
-    //Fork a Conversor en BN
     /*Se crea un proceso hijo*/
     pid_t pid = fork();
 
-    if(pid == 0){
+    if(pid == 0){   //Proceso Hijo
+        /*Se cierra la escritura en el pipe y se hace dup2 para permitir la comunicación entre procesos*/
         close(pipeImg[WRITE]);
         dup2(pipeImg[READ], STDIN_FILENO);
 
+        /*Se guarda el resultado como char* para enviarlo como parámetro*/
         char *resultadoStr = malloc(2);
         sprintf(resultadoStr, "%d", nearlyBlack);
         
-        //Ejecuta Binarizacion como proceso aparte pasando los parámetros en argv
+        /*Se ejecuta process_finish como proceso aparte pasando los parámetros en argv*/
         char *argumentos[] = {argv[0], argv[2], argv[3], argv[4], resultadoStr, NULL};
         execv("./process_finish", argumentos);
     }
 
-    //Enviar imagen en blanco y negro por pipe
-    else{
+    else{   //Proceso Padre
         /*Se convierte la imagen de int* a int array*/
         int imagen[tamano];
         for(int c = 0; c < tamano; c++){
             imagen[c] = imgBin[c];
         }
 
-        /*Se envía la imagen leida al hijo*/
+        /*Se envía la imagen binarizada al hijo para ser guardada*/
         close(pipeImg[READ]);
         write(pipeImg[WRITE], imagen, sizeof(imagen));
 
-        /*Se espera al hijo para continuar con la siguiente iteración del for*/
+        /*Se espera al hijo para avisar al main cuando la imagen sea guardada y el resultado sea entregado por pantalla*/
         waitpid(pid, &status, 0);
     }
 

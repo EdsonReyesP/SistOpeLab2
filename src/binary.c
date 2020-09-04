@@ -16,7 +16,7 @@
 
 //Programa que lee una imagen y crea un proceso al cual enviar el resultado.
 int main (int argc, char **argv){
-    //Almacenar los datos
+    /*Se extraen los datos necesarios de argv*/
     int umbral, alto, ancho, tamano;
 
     umbral = atoi(argv[1]);
@@ -24,6 +24,7 @@ int main (int argc, char **argv){
     ancho = atoi(argv[5]);
     tamano = alto * ancho;
 
+    /*Se lee la imagen del pipe y se pasa de int array a int puntero para aplicar la binarización*/
     int imgBuffer[tamano];
     read(STDIN_FILENO, imgBuffer, tamano * sizeof(int));
     int *imgFiltro = malloc(tamano * sizeof(int));
@@ -31,37 +32,37 @@ int main (int argc, char **argv){
         imgFiltro[c] = imgBuffer[c];
     }
 
+    /*Se binariza la imagen según el umbral indicado por el usuario previamente*/
     int *imgBin = binarizar(imgFiltro, ancho, alto, umbral);
 
     /*Se crea variable para la espera del hijo*/
     int status;
 
-    //Crear pipe
+    /*Se crea el pipe para enviar la imagen al siguiente proceso*/
     int pipeImg[2];
     pipe(pipeImg);
 
-    //Fork a Conversor en BN
     /*Se crea un proceso hijo*/
     pid_t pid = fork();
 
-    if(pid == 0){
+    if(pid == 0){   //Proceso Hijo
+        /*Se cierra la lectura del pipe y se hace dup2 para permitir la comunicación*/
         close(pipeImg[WRITE]);
         dup2(pipeImg[READ], STDIN_FILENO);
         
-        //Ejecuta Binarizacion como proceso aparte pasando los parámetros en argv
+        /*Se ejecuta classification como proceso aparte pasando los parámetros en argv*/
         char *argumentos[] = {argv[0], argv[2], argv[3], argv[4], argv[5], NULL};
         execv("./classification", argumentos);
     }
 
-    //Enviar imagen en blanco y negro por pipe
-    else{
+    else{   //Proceso Padre
         /*Se convierte la imagen de int* a int array*/
         int imagen[tamano];
         for(int c = 0; c < tamano; c++){
             imagen[c] = imgBin[c];
         }
 
-        /*Se envía la imagen leida al hijo*/
+        /*Se envía la imagen binarizada al hijo*/
         close(pipeImg[READ]);
         write(pipeImg[WRITE], imagen, sizeof(imagen));
 

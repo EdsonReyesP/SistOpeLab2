@@ -1,4 +1,0 @@
-funciones.o: funciones.c stb_image/stb_image.h \
- stb_image/stb_image_write.h
-convertirBN.o: convertirBN.c stb_image/stb_image.h \
- stb_image/stb_image_write.h funciones.h

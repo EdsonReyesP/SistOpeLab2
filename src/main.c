@@ -37,6 +37,7 @@ int main (int argc, char **argv){
         pid_t pid = fork();
 
         if(pid == 0){   //Proceso Hijo
+            /*Se convierten los valores ingresados por el usuario a char* para ser enviados como argumentos al siguiente proceso*/
             char* iStr = malloc(4);
             char* umbralStr = malloc(10);
             char* porcentajeStr = malloc(10);
@@ -46,11 +47,11 @@ int main (int argc, char **argv){
             sprintf(porcentajeStr, "%d", porcentaje);
             sprintf(banderaStr, "%d", bandera);
 
-            //Ejecuta open como proceso aparte recibiendo parámetros en arcv
+            /*Se ejecuta open como proceso aparte recibiendo parámetros en arcv*/
             char *argumentos[] = {iStr, umbralStr, porcentajeStr, banderaStr, filtro, NULL};
             execv("./open", argumentos);
         }
-        else{           //Proceso Padre
+        else{   //Proceso Padre
             /*Se espera al hijo para continuar con la siguiente iteración del for*/
             waitpid(pid, &status, 0);
         }
